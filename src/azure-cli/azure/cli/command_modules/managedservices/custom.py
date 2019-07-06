@@ -8,14 +8,8 @@ from msrestazure.tools import parse_resource_id, is_valid_resource_id
 
 logger = get_logger(__name__)
 
-# The API version is not being set correctly in the generated Python SDK.
-# Opened an issue https://github.com/Azure/azure-cli/issues/9813 to track it.
-# Ideally, the SDK should set the version accordingly based on Swagger spec.
-# TODO: Remove when azure-cli issue #9813 is resolved.
-API_VERSION_PREVIEW = '2018-06-01-preview'
-
-
 # region Definitions Custom Commands
+
 
 # pylint: disable=unused-argument
 def cli_definition_create(cmd, client,
@@ -50,11 +44,11 @@ def cli_definition_create(cmd, client,
         Plan=plan,
     )
 
-    return client.create_or_update(
+    poller = client.create_or_update(
         registration_definition_id=definition_id,
-        api_version=API_VERSION_PREVIEW,
         scope=scope,
         properties=properties)
+    return poller.result()
 
 
 # pylint: disable=unused-argument
@@ -65,17 +59,14 @@ def cli_definition_get(cmd, client,
     scope = _get_scope(sub_id, rg_name)
     return client.get(
         scope=scope,
-        registration_definition_id=definition_id,
-        api_version=API_VERSION_PREVIEW)
+        registration_definition_id=definition_id)
 
 
 # pylint: disable=unused-argument
 def cli_definition_list(cmd, client):
     subscription = _get_subscription_id_from_cmd(cmd)
     scope = _get_scope(subscription)
-    return client.list(
-        scope=scope,
-        api_version=API_VERSION_PREVIEW)
+    return client.list(scope=scope)
 
 
 def cli_definition_delete(cmd, client, definition):
@@ -84,8 +75,7 @@ def cli_definition_delete(cmd, client, definition):
     scope = _get_scope(sub_id, rg_name)
     return client.delete(
         scope=scope,
-        registration_definition_id=definition_id,
-        api_version=API_VERSION_PREVIEW)
+        registration_definition_id=definition_id)
 
 
 # endregion
@@ -110,11 +100,11 @@ def cli_assignment_create(cmd, client,
     scope = _get_scope(subscription, resource_group_name)
     properties = RegistrationAssignmentProperties(
         registration_definition_id=definition)
-    return client.create_or_update(
+    poller = client.create_or_update(
         scope=scope,
         registration_assignment_id=assignment_id,
-        api_version=API_VERSION_PREVIEW,
         properties=properties)
+    return poller.result()
 
 
 # pylint: disable=unused-argument
@@ -128,7 +118,6 @@ def cli_assignment_get(cmd, client,
     return client.get(
         scope=scope,
         registration_assignment_id=assignment_id,
-        api_version=API_VERSION_PREVIEW,
         expand_registration_definition=include_definition)
 
 
@@ -139,10 +128,10 @@ def cli_assignment_delete(cmd, client,
     subscription = _get_subscription_id_from_cmd(cmd)
     assignment_id, sub_id, rg_name = _get_resource_id_parts(cmd, assignment, subscription, resource_group_name)
     scope = _get_scope(sub_id, rg_name)
-    return client.delete(
+    poller = client.delete(
         scope=scope,
-        registration_assignment_id=assignment_id,
-        api_version=API_VERSION_PREVIEW)
+        registration_assignment_id=assignment_id)
+    return poller.result()
 
 
 # pylint: disable=unused-argument
@@ -153,7 +142,6 @@ def cli_assignment_list(cmd, client,
     scope = _get_scope(sub_id, resource_group_name)
     return client.list(
         scope=scope,
-        api_version=API_VERSION_PREVIEW,
         expand_registration_definition=include_definition)
 
 # endregion
